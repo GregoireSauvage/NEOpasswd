@@ -9,8 +9,13 @@ def load_users(filename):
     """
     try:
         with open(filename, "r") as f:
-            users = json.load(f)["users"]
-        
+            file_content = f.read()
+            if file_content == "":
+                return []
+                
+            else:
+                users = json.loads(file_content)["users"]
+            
         # Check if all data is present in the file
         for user in users:
             if(user["username"] and user["master_key"] and user["salt"]):
@@ -28,17 +33,24 @@ def load_users(filename):
 
 
 # Function to load data from the JSON file
-def load_data(file_path):
+def load_data(filename):
     """
     Load password data from a JSON file.
     """
     try:
-        with open(file_path, "r") as f:
-            data = json.load(f)["users"]
+        with open(filename, "r") as f:
+            data = f.read()
+            if data == "":
+                users = []
+                print("No users found in file. Create a new user first.")
+                exit(1)
+                
+            else:
+                users = json.loads(data)["users"]
     except FileNotFoundError:
-        raise ValueError(f"File not found at path {file_path}")
+        raise ValueError(f"File not found at path {filename}")
     except json.JSONDecodeError:
-        raise ValueError(f"Invalid JSON data in file {file_path}")
+        raise ValueError(f"Invalid JSON data in file {filename}")
 
     # Print users
     print("----- Users -----")
@@ -71,18 +83,25 @@ def load_data(file_path):
     return username, hashed_key, salt, id_service, services
 
 # Function to load password data from a JSON file for a specific service and user
-def load_password_data(file_path):
+def load_password_data(filename):
     """
     Load password data from a JSON file for a specific service and user.
     """
     try:
-        with open(file_path, "r") as f:
-            data = json.load(f)["users"]
+        with open(filename, "r") as f:
+            data = f.read()
+            if data == "":
+                users = []
+                print("No users found in file. Create a new user first.")
+                exit(1)
+                
+            else:
+                users = json.loads(data)["users"]
 
     except FileNotFoundError:
-        raise ValueError(f"File not found at path {file_path}")
+        raise ValueError(f"File not found at path {filename}")
     except json.JSONDecodeError:
-        raise ValueError(f"Invalid JSON data in file {file_path}")
+        raise ValueError(f"Invalid JSON data in file {filename}")
 
     # Print users
     print("Users: " + ", ".join([user["username"] for user in data]))
@@ -130,8 +149,9 @@ def save_master_key_and_salt_to_file(filename, hashed_key, username, salt):
     try:
         with open(filename, "r") as f:
             existing_data = json.load(f)
-    except FileNotFoundError:
+    except (FileNotFoundError, json.JSONDecodeError):
         existing_data = {"users": []}
+
         
     # Append the new user to the list of users
     existing_data["users"].append(data)
