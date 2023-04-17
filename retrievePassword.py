@@ -31,19 +31,16 @@ def decrypt_password(encrypted_password, salt):
     # Return the password as a string
     return password.decode()
 
-def retrieve_password():
+def retrieve_password(filename):
         
-    json_file = "passwordManager.json"
     try:
-        salt, encrypted_password, service, username, email = load_password_data(json_file)
+        salt, encrypted_password, service, username, email = load_password_data(filename)
     except ValueError as e:
         print(e)
         exit(0)
     except KeyboardInterrupt as ke:
         print("\nExiting...")    
         exit(0)
-
-
 
     try:
         decrypted_password = decrypt_password(encrypted_password, salt)

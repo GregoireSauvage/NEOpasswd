@@ -34,7 +34,9 @@ def enter_username(data):
         print("No users exist. Creating new user.")
     else:
         print("Users: " + ", ".join([user["username"] for user in data]))
-    username = input("Enter username: ")
+    username = ""
+    while username == "":
+        username = input("Enter username: ")
     user_data = next((user for user in data if user["username"] == username), None)
     if user_data is not None:
         print("Username already exists. Please enter a different username.")
@@ -85,13 +87,17 @@ def enter_credentials(services):
     print("----- Services credentials already stored -----")
     for s in services:
         print(s)
-    service = input("Enter a new service name (gmail for example): ")
+    service = ""
+    while service == "":
+        service = input("Enter a new service name (gmail for example): ")
     # check if service already exists
     if service in services:
         print("Service already exists")
         return enter_credentials(services)
     
-    email = input("Enter email address: ")
+    email = ""
+    while email == "":
+        email = input("Enter email address: ")
     password = enter_password()
     return service, email, password
 
@@ -118,5 +124,5 @@ def enter_password():
         print("password : " + password)
         return password
     else:
-        print("Invalid choice")
+        print("Invalid choice. Please enter 1 or 2.")
         return enter_password()

@@ -9,19 +9,22 @@ from utilities import generate_key
 
 
 # Create user
-def create_user():
+def create_user(filename):
     """
     Create a new user.
     """
     # Load the existing user data
     try:
-        data = load_users("passwordManager.json")
-        username = enter_username(data)
-        passphrase = getpass.getpass("Enter passphrase: ")
+        data = load_users(filename)
+        username = enter_username(data) 
+        passphrase = ""
+        passphrase_check = ""
+        while passphrase != passphrase_check or passphrase == "":
+            passphrase = getpass.getpass("Enter passphrase: ")
+            passphrase_check = getpass.getpass("Re-enter passphrase: ")
+        
         salt = secrets.token_bytes(16)
         key = generate_key(passphrase, salt)
-
-        json_file = "passwordManager.json"
 
         # Hash the key
         hex_key = key.hex()
@@ -30,7 +33,7 @@ def create_user():
         print(hashed_key)
         
         # Save the username and salt to a JSON file
-        save_master_key_and_salt_to_file(json_file, hashed_key, username, salt)
+        save_master_key_and_salt_to_file(filename, hashed_key, username, salt)
 
     except ValueError as e:
         print(e)
