@@ -9,8 +9,13 @@ def load_users(filename):
     """
     try:
         with open(filename, "r") as f:
-            users = json.load(f)["users"]
-        
+            file_content = f.read()
+            if file_content == "":
+                return []
+                
+            else:
+                users = json.loads(file_content)["users"]
+            
         # Check if all data is present in the file
         for user in users:
             if(user["username"] and user["master_key"] and user["salt"]):
@@ -28,29 +33,38 @@ def load_users(filename):
 
 
 # Function to load data from the JSON file
-def load_data(file_path):
+def load_data(filename):
     """
     Load password data from a JSON file.
     """
     try:
-        with open(file_path, "r") as f:
-            data = json.load(f)["users"]
+        with open(filename, "r") as f:
+            data = f.read()
+            if data == "":
+                users = []
+                print("No users found in file. Create a new user first.")
+                exit(1)
+                
+            else:
+                users = json.loads(data)["users"]
     except FileNotFoundError:
-        raise ValueError(f"File not found at path {file_path}")
+        raise ValueError(f"File not found at path {filename}")
     except json.JSONDecodeError:
-        raise ValueError(f"Invalid JSON data in file {file_path}")
+        raise ValueError(f"Invalid JSON data in file {filename}")
 
     # Print users
     print("----- Users -----")
-    for user in data:
+    for user in users:
         print(user["username"])
 
     # Find the user data with the given username
-    username = input("Enter username: ")
-    user_data = next((user for user in data if user["username"] == username), None)
+    username = ""
+    while username == "":
+        username = input("Enter username: ")
+    user_data = next((user for user in users if user["username"] == username), None)
     if user_data is None:
         print("Incorrect username")
-        exit(0)
+        return load_data(filename)
 
     hashed_key = user_data["master_key"]
 
@@ -71,37 +85,56 @@ def load_data(file_path):
     return username, hashed_key, salt, id_service, services
 
 # Function to load password data from a JSON file for a specific service and user
-def load_password_data(file_path):
+def load_password_data(filename):
     """
     Load password data from a JSON file for a specific service and user.
     """
     try:
-        with open(file_path, "r") as f:
-            data = json.load(f)["users"]
+        with open(filename, "r") as f:
+            data = f.read()
+            if data == "":
+                users = []
+                print("No users found in file. Create a new user first.")
+                exit(1)
+                
+            else:
+                users = json.loads(data)["users"]
+                if not users:
+                    print("No users found in file. Create a new user first.")
+                    exit(1)
 
     except FileNotFoundError:
-        raise ValueError(f"File not found at path {file_path}")
+        raise ValueError(f"File not found at path {filename}")
     except json.JSONDecodeError:
-        raise ValueError(f"Invalid JSON data in file {file_path}")
+        raise ValueError(f"Invalid JSON data in file {filename}")
 
     # Print users
-    print("Users: " + ", ".join([user["username"] for user in data]))
+    print("----- Users -----")
+    for user in users:
+        print(user["username"])
     
     # Find the user data with the given username
-    username = input("Enter username: ")
-    user_data = next((user for user in data if user["username"] == username), None)
+    username = ""
+    while username == "":
+        username = input("Enter username: ")
+    user_data = next((user for user in users if user["username"] == username), None)
     if user_data is None:
-        raise ValueError("Incorrect username")
+        print("Incorrect username. Please try again.")
+        return load_password_data(filename)
 
     # Convert hexadecimal strings to bytes
     salt = bytes.fromhex(user_data["salt"])
 
     # Print all the services for the user
-    if "passwords" in user_data:
-        print("Services: " + ", ".join([password["service"] for password in user_data["passwords"]]))
+    if "passwords" in user_data and len(user_data["passwords"]) > 0:
+        print("----- Services -----")
+        for password in user_data["passwords"]:
+            print(password["service"])
 
         # Get the password data for the specified service from the user data
-        service = input("Enter service (gmail for example): ")
+        service = ""
+        while service == "":
+            service = input("Enter service (gmail for example): ")
         password_data = next((password for password in user_data["passwords"] if password["service"] == service), None)
         if password_data is None:
             raise ValueError("Service not found in password data.")
@@ -130,8 +163,9 @@ def save_master_key_and_salt_to_file(filename, hashed_key, username, salt):
     try:
         with open(filename, "r") as f:
             existing_data = json.load(f)
-    except FileNotFoundError:
+    except (FileNotFoundError, json.JSONDecodeError):
         existing_data = {"users": []}
+
         
     # Append the new user to the list of users
     existing_data["users"].append(data)
@@ -143,6 +177,50 @@ def save_master_key_and_salt_to_file(filename, hashed_key, username, salt):
         raise ValueError(f"File not found at path {filename}")
     except json.JSONDecodeError:
         raise ValueError(f"Invalid JSON data in file {filename}")
+
+
+# Function to remove a user from the JSON file
+def remove_user_from_file(filename, users):
+    """
+    Save the updated list of users to a JSON file.
+    """
+    data = {"users": users}
+
+    try:
+        with open(filename, "w") as f:
+            json.dump(data, f)
+    except FileNotFoundError:
+        raise ValueError(f"File not found at path {filename}")
+    except json.JSONDecodeError:
+        raise ValueError(f"Invalid JSON data in file {filename}")
+    
+# Function to remove a user from the JSON file
+def remove_password_from_file(filename, users, username, service):
+    """
+    Remove a password credential for a specific service from the JSON file.
+    """
+    try:
+        with open(filename, "r") as f:
+            existing_data = json.load(f)
+    except FileNotFoundError or json.JSONDecodeError:
+        existing_data = {"users": []}
+
+    # Find the user with the given username
+    for user in existing_data["users"]:
+        if user["username"] == username:
+            # Remove the password credential of the specific service
+            user["passwords"] = [credential for credential in user["passwords"] if credential["service"] != service]
+            break
+
+    # Save the updated data to the JSON file
+    try:
+        with open(filename, "w") as f:
+            json.dump(existing_data, f)
+    except FileNotFoundError:
+        raise ValueError(f"File not found at path {filename}")
+    except json.JSONDecodeError:
+        raise ValueError(f"Invalid JSON data in file {filename}")
+
 
 
 # Function to save the password data to a JSON file
@@ -173,3 +251,21 @@ def save_password_data_to_file(username, filename, password_id, service, email_a
     # Write the updated data dictionary to the file
     with open(filename, "w") as f:
         json.dump(data, f)
+
+
+# Functipon to save the modified user data to the JSON file
+def save_data(filename, users):
+    """
+    Save the updated users data to the JSON file.
+    """
+    data = {
+        "users": users
+    }
+
+    try:
+        with open(filename, "w") as f:
+            json.dump(data, f)
+    except FileNotFoundError:
+        raise ValueError(f"File not found at path {filename}")
+    except json.JSONDecodeError:
+        raise ValueError(f"Invalid JSON data in file {filename}")
