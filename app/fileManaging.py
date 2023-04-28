@@ -175,7 +175,7 @@ def save_master_key_and_salt_to_file(filename, hashed_key, username, salt):
     existing_data["users"].append(data)
     
     try:
-        with open(filename, "w") as f:
+        with open(file_path, "w") as f:
             json.dump(existing_data, f)
     except FileNotFoundError:
         raise ValueError(f"File not found at path {file_path}")
