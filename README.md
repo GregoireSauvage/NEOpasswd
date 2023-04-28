@@ -19,7 +19,8 @@ A simple and secure command-line-based password manager built with Python.
 
 ## Installation
 1. Clone the repository or download the source code:
-`git clone https://github.com/yourusername/password-manager.git`
+`git clone https://github.com/GregoireSauvage/NEOpasswd.git`
+
 
 2. Change to the project directory:
 `cd password-manager`
