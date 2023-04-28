@@ -23,7 +23,7 @@ A simple and secure command-line-based password manager built with Python.
 
 
 2. Change to the project directory:
-`cd password-manager`
+`cd NEOpasswd/app`
 
 3. Ensure you have the required dependencies installed.
 
